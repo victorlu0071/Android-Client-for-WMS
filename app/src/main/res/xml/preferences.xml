@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory
+        android:title="@string/settings_server_category"
+        app:iconSpaceReserved="false">
+
+        <EditTextPreference
+            android:key="server_address"
+            android:title="@string/settings_server_address"
+            android:summary="@string/settings_server_address_summary"
+            android:defaultValue="http://10.0.2.2:5000/"
+            app:iconSpaceReserved="false" />
+            
+        <Preference
+            android:key="test_connection"
+            android:title="Test Server Connection"
+            android:summary="Test if the API server is reachable"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/settings_button_binding_category"
+        app:iconSpaceReserved="false">
+
+        <Preference
+            android:key="scan_button_help"
+            android:title="Physical Button Scanning"
+            android:summary="@string/settings_scan_button_help"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="bind_scan_button"
+            android:title="@string/settings_bind_scan_button"
+            android:summary="@string/settings_bind_scan_button_summary"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="clear_button_binding"
+            android:title="@string/settings_button_clear_binding"
+            android:summary="@string/settings_button_clear_binding_summary"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="Barcode API Settings"
+        app:iconSpaceReserved="false">
+
+        <EditTextPreference
+            android:key="barcode_appcode"
+            android:title="Barcode API APPCODE"
+            android:summary="Set your Ali Barcode API APPCODE for product lookups"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="barcode_api_help"
+            android:title="API Access Help"
+            android:summary="Required for product info lookup for barcodes starting with '69'"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="Connection Help"
+        app:iconSpaceReserved="false">
+        
+        <Preference
+            android:key="help_emulator"
+            android:title="Emulator Setup"
+            android:summary="For emulator: use http://10.0.2.2:5000/"
+            app:iconSpaceReserved="false" />
+            
+        <Preference
+            android:key="help_device"
+            android:title="Physical Device Setup"
+            android:summary="For physical device: use http://YOUR_COMPUTER_IP:5000/"
+            app:iconSpaceReserved="false" />
+            
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/settings_about_category"
+        app:iconSpaceReserved="false">
+
+        <Preference
+            android:key="app_version"
+            android:title="@string/settings_app_version"
+            android:summary="@string/settings_app_version_value"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="about_app"
+            android:title="@string/settings_about_app"
+            android:summary="@string/settings_about_app_summary"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen> 

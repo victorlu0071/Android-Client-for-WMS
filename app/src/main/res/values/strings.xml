@@ -1,0 +1,153 @@
+<resources>
+    <string name="app_name">StockSync Warehouse</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">StockSync Warehouse</string>
+    <string name="nav_header_subtitle">Warehouse Management System</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="menu_product_info">Product Info</string>
+    <string name="menu_stock">In/Out Stock</string>
+    <string name="menu_move_stock">Move Stock</string>
+    <string name="menu_settings">Settings</string>
+
+    <!-- Product Info Screen -->
+    <string name="product_search_hint">Enter product code</string>
+    <string name="search_button">Search</string>
+    <string name="scan_button">Scan</string>
+    <string name="product_code_label">Product Code:</string>
+    <string name="product_name_label">Name:</string>
+    <string name="product_desc_label">Description:</string>
+    <string name="product_quantity_label">Quantity:</string>
+    <string name="product_location_label">Location:</string>
+    <string name="product_cost_label">Cost:</string>
+    <string name="please_enter_product_code_search">Please enter a product code</string>
+    <string name="product_not_found">Product not found or API error</string>
+    <string name="error_product_not_found">Product not found (404): The product with code \'%1$s\' doesn\'t exist</string>
+    <string name="error_authentication">Authentication error (401): Not authorized to access this resource</string>
+    <string name="error_server">Server error (500): The API server encountered an error</string>
+    <string name="error_generic">Error: %1$d - %2$s</string>
+    <string name="error_connection">Connection error: Could not connect to the server at %1$s\n\nPlease check that:\n1. Your server is running\n2. The server address is correct\n3. Your device has network connectivity</string>
+    <string name="error_timeout">Connection timed out: The server at %1$s is taking too long to respond</string>
+    <string name="error_unknown_host">Unknown host: Could not find the server at %1$s\n\nIf using emulator, try: http://10.0.2.2:5000/\nIf using physical device, use your computer\'s IP address</string>
+    <string name="error_network">Network error: %1$s\n\nPlease check your internet connection</string>
+    <string name="error_http">HTTP error %1$d: %2$s</string>
+    <string name="error_unexpected">Unexpected error: %1$s</string>
+    <string name="currency_format">$%.2f</string>
+    
+    <!-- Scan Instructions -->
+    <string name="scan_product_hint">Scan product barcode to fill product code</string>
+    <string name="scan_location_hint">Scan location QR code to fill location</string>
+    <string name="scan_hint_physical_button">Tip: Use bound physical button for quick scanning</string>
+    <string name="scanning_in_progress">Processing scan, please wait...</string>
+
+    <!-- Stock Screen -->
+    <string name="stock_title">Manage Stock</string>
+    <string name="in_stock_button">Add Stock</string>
+    <string name="out_stock_button">Remove Stock</string>
+    <string name="product_code">Product Code</string>
+    <string name="quantity">Quantity</string>
+    <string name="location">Location</string>
+    <string name="submit">Submit</string>
+    <string name="stock_instructions">1. Scan product\n2. Enter quantity\n3. Scan location (for Add Stock)\n4. Submit</string>
+
+    <!-- Move Stock Screen -->
+    <string name="move_stock_title">Change Product Location</string>
+    <string name="from_product_code">From Product Code</string>
+    <string name="to_product_code">To Product Code</string>
+    <string name="move_quantity">Quantity to Move</string>
+    <string name="move_button">Move Stock</string>
+    <string name="change_location_button">Change Location</string>
+    <string name="move_stock_instructions">1. Scan product\n2. Scan new location\n3. Submit change</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_server_category">Server Settings</string>
+    <string name="settings_server_address">Server Address</string>
+    <string name="settings_server_address_summary">Set the address of the StockSync API server</string>
+    <string name="settings_about_category">About</string>
+    <string name="settings_app_version">App Version</string>
+    <string name="settings_app_version_value">1.0.0</string>
+    <string name="settings_about_app">About StockSync</string>
+    <string name="settings_about_app_summary">A warehouse management application</string>
+    
+    <!-- Button Binding Settings -->
+    <string name="settings_button_binding_category">Button Binding</string>
+    <string name="settings_bind_scan_button">Bind Scan Button</string>
+    <string name="settings_bind_scan_button_summary">Bind a physical button to trigger barcode scanning</string>
+    <string name="settings_bind_scan_button_dialog_title">Press any physical button</string>
+    <string name="settings_bind_scan_button_dialog_message">Press a physical button on your device to bind it to the scan function.</string>
+    <string name="settings_bind_scan_button_success">Button bound successfully: %1$s</string>
+    <string name="settings_bind_scan_button_current">Current button: %1$s</string>
+    <string name="settings_button_not_bound">No button bound</string>
+    <string name="settings_button_clear_binding">Clear Button Binding</string>
+    <string name="settings_button_clear_binding_summary">Remove any existing button binding</string>
+    <string name="settings_scan_button_help">Binding a physical button (like volume) allows quick scanning without touching the screen - ideal when wearing gloves</string>
+
+    <string name="fab_content_description">Represents a view to invoke an action</string>
+    <string name="image_view_item_transform_content_description">Represents an image view in the
+        item
+    </string>
+    <string name="current_location">Current Location</string>
+    <string name="enter_new_location_below_to_move_this_product">Enter new location below to move this product</string>
+    <string name="product_already_in_stock_at_this_location">Product already in stock at this location</string>
+    <string name="_1">1</string>
+    <string name="search_product">Search Product</string>
+    <string name="product_details">Product Details</string>
+    
+    <!-- New additions for internationalization -->
+    <string name="no_location_indicator">未入库</string>
+    <string name="product_no_location_hint">Product exists but has no location assigned</string>
+    <string name="product_found_with_location">Product found! Current location: %1$s</string>
+    <string name="product_found_no_location">Product found! No assigned location</string>
+    <string name="new_product_scan_location">New product! Please scan or enter a location.</string>
+    <string name="quantity_increased">Quantity increased to %1$d</string>
+    <string name="move_product_no_location">Product in stock! Currently has no assigned location</string>
+    <string name="move_product_with_location">Product in stock! Current location: %1$s</string>
+    <string name="product_no_stock">Product %1$s has no stock available to move.</string>
+    <string name="product_not_exist">Product %1$s does not exist in the system. Cannot move non-existent product.</string>
+    <string name="please_enter_product_code">Please enter a product code</string>
+    <string name="please_enter_location">Please enter a location</string>
+    <string name="cannot_move_product_not_in_stock">Cannot move a product that is not in stock</string>
+    <string name="location_changed_success">Product location changed successfully</string>
+    <string name="connection_error">Connection error: Could not connect to the server</string>
+    <string name="connection_timeout">Connection timed out: The server is taking too long to respond</string>
+    <string name="unknown_host">Unknown host: Could not find the server</string>
+    
+    <!-- Camera and Image Gallery Strings -->
+    <string name="image_count_format">%d images</string>
+    <string name="photo_added_gallery">Photo added to gallery</string>
+    <string name="error_photo_not_found">Error: Captured photo file not found</string>
+    <string name="photo_capture_failed">Photo capture canceled or failed</string>
+    <string name="no_camera_app">No camera app available</string>
+    <string name="camera_setup_failed">Camera setup failed</string>
+    <string name="failed_launch_camera">Failed to launch camera</string>
+    <string name="error_launching_camera">Error launching camera</string>
+    <string name="error_checking_permissions">Error checking permissions: %s</string>
+    <string name="camera_permission_required">Camera permission is required to take photos</string>
+    <string name="could_not_create_image">Could not create image file</string>
+    <string name="add_new_product">Add New Product</string>
+    <string name="take_photo">Take Photo</string>
+    <string name="take_another_photo">Take Another Photo</string>
+    <string name="done_capturing">Done Capturing</string>
+    <string name="multi_capture_mode">Multi-Capture Mode: %d photos taken</string>
+    
+    <!-- Custom Camera Strings -->
+    <string name="capture_button">Take Photo</string>
+    <string name="finish_button">Done</string>
+    <string name="photos_taken">%d photos taken</string>
+    <string name="multi_capture_camera">Multi-Capture Camera</string>
+    <string name="camera_permission_denied">Camera permission is required</string>
+    <string name="photo_saved">Photo saved</string>
+    <string name="photos_added_gallery">%d photos added to gallery</string>
+    <string name="no_photos_captured">No photos were captured</string>
+    <string name="photo_capture_canceled">Photo capture was canceled</string>
+    <string name="last_photo_thumbnail">Last photo thumbnail</string>
+    <string name="full_preview_image">Full size image preview</string>
+    <string name="close">Close</string>
+    
+    <!-- Custom Scanner Strings -->
+    <string name="scanner_title">Barcode Scanner</string>
+    <string name="scan_barcode_instruction">Align barcode within the frame</string>
+    <string name="barcode_found">Barcode found: %s</string>
+</resources>

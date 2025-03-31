@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- External app specific storage -->
+    <external-files-path
+        name="product_images"
+        path="Pictures/ProductImages" />
+    
+    <!-- App's internal cache storage -->
+    <cache-path
+        name="product_images_cache"
+        path="Pictures/ProductImages" />
+    
+    <!-- App's internal file storage -->
+    <files-path
+        name="product_images_internal"
+        path="Pictures/ProductImages" />
+    
+    <!-- External media storage -->
+    <external-path
+        name="external_images"
+        path="Pictures/ProductImages" />
+    
+    <!-- Legacy external storage -->
+    <external-path
+        name="external_storage_root"
+        path="." />
+</paths> 

@@ -1,0 +1,101 @@
+# StockSync API Server
+
+This API server provides a RESTful interface to interact with the StockSync inventory management system.
+
+## Setup and Running
+
+1. Install required dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
+
+2. Make sure your database file is configured in `settings.json`
+
+3. Run the API server:
+   ```
+   python api_server.py
+   ```
+
+4. The API server will be available at `http://localhost:5000`
+
+## API Endpoints
+
+### Health Check
+- **GET** `/api/health`
+- Returns the API status and product count
+
+### Product Queries
+- **GET** `/api/products`
+- Returns all products in the database
+- **GET** `/api/products?code=<product_code>`
+- Returns a specific product by code
+
+### Instock Operations
+- **POST** `/api/instock`
+- Add stock to a product
+- Request Body:
+  ```json
+  {
+    "code": "product_code",
+    "quantity": 1,  // optional, defaults to 1
+    "location": "A1B2"  // optional location code
+  }
+  ```
+- Returns success status and message
+
+### Outstock Operations
+- **POST** `/api/outstock`
+- Remove stock from a product
+- Request Body:
+  ```json
+  {
+    "code": "product_code",
+    "quantity": 1  // optional, defaults to 1
+  }
+  ```
+- Returns success status and message
+
+### Change Product Location
+- **POST** `/api/move-stock`
+- Change a product's stock location
+- Request Body:
+  ```json
+  {
+    "code": "product_code",
+    "location": "new_location"  // new location code
+  }
+  ```
+- Returns success status and message
+
+### Reload Database
+- **POST** `/api/reload-database`
+- Reload the database from the file specified in settings.json
+- Returns success status and message
+
+## Example Usage
+
+### Query a product
+```bash
+curl http://localhost:5000/api/products?code=ABC123
+```
+
+### Add stock
+```bash
+curl -X POST http://localhost:5000/api/instock \
+  -H "Content-Type: application/json" \
+  -d '{"code": "ABC123", "quantity": 5, "location": "A1B2"}'
+```
+
+### Remove stock
+```bash
+curl -X POST http://localhost:5000/api/outstock \
+  -H "Content-Type: application/json" \
+  -d '{"code": "ABC123", "quantity": 2}'
+```
+
+### Change product location
+```bash
+curl -X POST http://localhost:5000/api/move-stock \
+  -H "Content-Type: application/json" \
+  -d '{"code": "ABC123", "location": "B3C4"}'
+```
