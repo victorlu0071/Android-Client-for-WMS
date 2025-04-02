@@ -222,7 +222,7 @@ class AddProductActivity : AppCompatActivity() {
         // Barcode field enhancements
         binding.editTextBarcode.setOnFocusChangeListener { _, hasFocus ->
             if (hasFocus) {
-                binding.editTextBarcode.setBackgroundColor(android.graphics.Color.parseColor("#E3F2FD")) // Light blue
+                binding.editTextBarcode.setBackgroundColor(ContextCompat.getColor(this, R.color.light_blue)) // Use KTX extension
                 Log.d(TAG, "Barcode field has focus")
             } else {
                 binding.editTextBarcode.setBackgroundColor(android.graphics.Color.TRANSPARENT)
@@ -258,11 +258,11 @@ class AddProductActivity : AppCompatActivity() {
                 try {
                     val price = text.toDoubleOrNull() ?: 0.0
                     // Format to 2 decimal places without the currency symbol
-                    val formatted = String.format("%.2f", price)
+                    val formatted = String.format(Locale.US, "%.2f", price)
                     if (formatted != s.toString()) {
                         s?.replace(0, s.length, formatted)
                     }
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     // Just leave the text as is if there's an error
                 }
                 
@@ -472,7 +472,9 @@ class AddProductActivity : AppCompatActivity() {
                     // Get the product code from the response or use barcode
                     val responseBody = response.body()
                     val responseCode = if (responseBody != null && responseBody.data is Map<*, *>) {
-                        (responseBody.data as Map<*, *>)["code"]?.toString() ?: barcode
+                        responseBody.data.let { data ->
+                            (data as? Map<*, *>)?.get("code")?.toString() ?: barcode
+                        }
                     } else {
                         barcode // Fallback to barcode if we can't extract the code
                     }

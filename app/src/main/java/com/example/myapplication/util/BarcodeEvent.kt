@@ -9,6 +9,7 @@ import androidx.lifecycle.MutableLiveData
  */
 object BarcodeEvent {
     // Constant for event naming
+    @Suppress("unused")
     const val BARCODE_RESULT = "barcode_result"
     
     // Private mutable live data for internal modification
@@ -39,6 +40,7 @@ object BarcodeEvent {
     /**
      * Reset the barcode data
      */
+    @Suppress("unused")
     fun reset() {
         lastBarcode = null
         soundPlayedForBarcode = false

@@ -7,9 +7,11 @@ import retrofit2.Response
 import retrofit2.http.*
 
 interface StockSyncApi {
+    @Suppress("unused")
     @GET("api/health")
     suspend fun getHealth(): Response<ApiResponse>
 
+    @Suppress("unused")
     @GET("api/products")
     suspend fun getAllProducts(): Response<List<Product>>
 
@@ -19,6 +21,7 @@ interface StockSyncApi {
     @GET("api/products")
     suspend fun getProductByBarcode(@Query("barcode") barcode: String): Response<ProductResponse>
 
+    @Suppress("unused")
     @GET("api/product/{code}")
     suspend fun getProduct(@Path("code") code: String): Response<ProductResponse>
 

@@ -42,19 +42,19 @@
     <string name="scan_product_hint">Scan product barcode to fill product code</string>
     <string name="scan_location_hint">Scan location QR code to fill location</string>
     <string name="scan_hint_physical_button">Tip: Use bound physical button for quick scanning</string>
-    <string name="scanning_in_progress">Processing scan, please wait...</string>
+    <string name="scanning_in_progress">Processing scan, please wait…</string>
     <string name="use_api_lookup">Use barcode API lookup</string>
     <string name="physical_button_instruction">Use physical scan button to fill the currently focused field</string>
     <string name="barcode_field_hint">Enter barcode</string>
     <string name="barcode_section_title">Product Barcode</string>
     <string name="barcode_filled_input">Barcode filled and will be saved automatically</string>
-    <string name="barcode_filled_search">Searching for product...</string>
+    <string name="barcode_filled_search">Searching for product…</string>
     <string name="invalid_barcode_format">Invalid barcode format (must start with 69, be 13 digits)</string>
     <string name="barcode_field_cleared">Barcode field cleared</string>
     <string name="location_set">Location set</string>
     <string name="barcode_field_filled">Barcode field filled</string>
     <string name="code_field_filled">Code field filled</string>
-    <string name="auto_submitting">Auto-submitting form...</string>
+    <string name="auto_submitting">Auto-submitting form…</string>
 
     <!-- Stock Screen -->
     <string name="stock_title">Manage Stock</string>

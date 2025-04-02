@@ -70,10 +70,10 @@ class CustomBarcodeScannerActivity : AppCompatActivity() {
         
         // Update UI based on scan mode
         if (scanningForBarcode) {
-            binding.scannerTitle.text = "Scan Product Barcode"
+            binding.scannerTitle.text = getString(R.string.scan_product_barcode_instruction)
             binding.scanInstructions.text = getString(R.string.scan_product_barcode_instruction)
             // Add a subtle purple tint to the scanner for barcode mode
-            binding.scanOverlay.setColorFilter(android.graphics.Color.parseColor("#224B0082"))
+            binding.scanOverlay.setColorFilter(ContextCompat.getColor(this, R.color.purple_200_transparent), android.graphics.PorterDuff.Mode.SRC_ATOP)
         } else {
             binding.scannerTitle.text = getString(R.string.scanner_title)
             binding.scanInstructions.text = getString(R.string.scan_barcode_instruction)
@@ -297,6 +297,7 @@ class CustomBarcodeScannerActivity : AppCompatActivity() {
         }
     }
     
+    @OptIn(androidx.camera.core.ExperimentalGetImage::class)
     private fun showFocusAnimation() {
         // Animate scan overlay as visual feedback
         binding.scanOverlay.animate()
@@ -434,6 +435,7 @@ class CustomBarcodeScannerActivity : AppCompatActivity() {
         cameraExecutor.shutdown()
     }
     
+    @OptIn(androidx.camera.core.ExperimentalGetImage::class)
     private fun processImageForBarcodes(imageProxy: ImageProxy) {
         val mediaImage = imageProxy.image
         if (mediaImage != null && isScanning.get()) {

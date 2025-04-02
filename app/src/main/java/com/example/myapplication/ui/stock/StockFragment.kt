@@ -24,6 +24,7 @@ import retrofit2.HttpException
 import java.io.IOException
 import androidx.core.graphics.toColorInt
 import com.example.myapplication.R
+import androidx.core.content.ContextCompat
 
 
 class StockFragment : Fragment() {
@@ -332,7 +333,7 @@ class StockFragment : Fragment() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: android.text.Editable?) {
                 // Don't auto-search while we're processing a barcode to prevent duplicate searches
-                if (!isProcessingBarcode && s?.length ?: 0 >= 5) {
+                if (!isProcessingBarcode && (s?.length ?: 0) >= 5) {
                     val code = s.toString().trim()
                     if (code.isNotEmpty()) {
                         // Small delay before auto-searching
@@ -360,7 +361,7 @@ class StockFragment : Fragment() {
         // Improve visibility when focused
         binding.locationInput.setOnFocusChangeListener { _, hasFocus ->
             if (hasFocus) {
-                binding.locationInput.setBackgroundColor(android.graphics.Color.parseColor("#E3F2FD")) // Light blue
+                binding.locationInput.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.light_blue))
                 currentScanTarget = ScanTarget.LOCATION
                 Log.d(tAG, "Location field has focus")
             } else {
