@@ -16,6 +16,9 @@ interface StockSyncApi {
     @GET("api/products")
     suspend fun getProductByCode(@Query("code") code: String): Response<ProductResponse>
 
+    @GET("api/products")
+    suspend fun getProductByBarcode(@Query("barcode") barcode: String): Response<ProductResponse>
+
     @GET("api/product/{code}")
     suspend fun getProduct(@Path("code") code: String): Response<ProductResponse>
 
@@ -30,6 +33,12 @@ interface StockSyncApi {
 
     @POST("api/add-product")
     suspend fun addProduct(@Body product: Product): Response<ApiResponse>
+    
+    /**
+     * Add or update a barcode for a product
+     */
+    @POST("api/scan-barcode")
+    suspend fun addBarcode(@Body request: BarcodeRequest): Response<BarcodeResponse>
     
     /**
      * Upload product images using base64 encoded strings in a JSON payload

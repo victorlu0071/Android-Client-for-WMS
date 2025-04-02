@@ -3,13 +3,14 @@ package com.example.myapplication.data
 import com.google.gson.annotations.SerializedName
 
 data class Product(
-    val code: String,
+    val code: String? = null,
     val name: String,
     @SerializedName("specs") val description: String,
     @SerializedName("stock") val quantity: Int? = null,
     @SerializedName("location_code") val location: String? = null,
     val cost: Float? = null,
-    val link: String? = null
+    val link: String? = null,
+    @SerializedName("barcode") val barcode: String? = null
 )
 
 data class ProductResponse(
@@ -24,19 +25,55 @@ data class ApiResponse(
 )
 
 data class InStockRequest(
-    val code: String,
+    val code: String? = null,
+    val barcode: String? = null,
     val quantity: Int = 1,
     @SerializedName("location_code") val location: String? = null
-)
+) {
+    // Validate that either code or barcode is provided
+    init {
+        require(code != null || barcode != null) { "Either code or barcode must be provided" }
+    }
+}
 
 data class OutStockRequest(
-    val code: String,
+    val code: String? = null,
+    val barcode: String? = null,
     val quantity: Int = 1
-)
+) {
+    // Validate that either code or barcode is provided
+    init {
+        require(code != null || barcode != null) { "Either code or barcode must be provided" }
+    }
+}
 
 data class MoveStockRequest(
-    val code: String,
+    val code: String? = null,
+    val barcode: String? = null,
     @SerializedName("location_code") val location: String
+) {
+    // Validate that either code or barcode is provided
+    init {
+        require(code != null || barcode != null) { "Either code or barcode must be provided" }
+    }
+}
+
+/**
+ * Data class for adding or updating a barcode for a product
+ */
+data class BarcodeRequest(
+    val code: String,      // Product code
+    @SerializedName("barcode") val barcode: String    // Barcode value (must start with "69" and be 13 digits)
+)
+
+/**
+ * Response for barcode operations
+ */
+data class BarcodeResponse(
+    val success: Boolean,
+    val message: String,
+    @SerializedName("product_code") val productCode: String,
+    @SerializedName("barcode") val barcode: String
 )
 
 /**

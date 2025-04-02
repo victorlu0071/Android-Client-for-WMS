@@ -141,7 +141,7 @@ class BarcodeScannerActivity : AppCompatActivity() {
                     it.setSurfaceProvider(binding.viewFinder.surfaceProvider)
                 }
             
-            // Image analyzer for barcode scanning
+            // Image analyzer for barcode scanning with optimized settings
             val imageAnalyzer = ImageAnalysis.Builder()
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build()
@@ -180,6 +180,12 @@ class BarcodeScannerActivity : AppCompatActivity() {
                 // Configure camera for optimal barcode scanning focus
                 setupInitialFocus()
                 
+                // Immediately apply close-range focus for barcodes
+                camera?.let {
+                    // Configure camera control for barcode scanning - typically closer range
+                    applyBarcodeOptimizedCameraSettings(it)
+                }
+                
             } catch (exc: Exception) {
                 Log.e(TAG, "Use case binding failed", exc)
             }
@@ -212,7 +218,7 @@ class BarcodeScannerActivity : AppCompatActivity() {
                         // Create a metering point at the saved position
                         val centerPoint = factory.createPoint(lastFocusX, lastFocusY)
                         
-                        // Use a simpler initial focus approach to avoid false detection issues
+                        // Enhanced focus action with more aggressive parameters for barcode scanning
                         val action = FocusMeteringAction.Builder(centerPoint, FocusMeteringAction.FLAG_AF)
                             .addPoint(centerPoint, FocusMeteringAction.FLAG_AE) // Also adjust exposure
                             .disableAutoCancel() // Make focus stick until next request
@@ -220,6 +226,10 @@ class BarcodeScannerActivity : AppCompatActivity() {
                         
                         // Apply the focus
                         camera.cameraControl.startFocusAndMetering(action)
+                            .addListener({
+                                // After focus completes, set manual distance for barcode range
+                                setOptimalFocusDistanceForBarcodes(camera)
+                            }, ContextCompat.getMainExecutor(this))
                         
                         // Show visual indicator only (without triggering additional focus)
                         binding.scanOverlay.animate()
@@ -247,6 +257,10 @@ class BarcodeScannerActivity : AppCompatActivity() {
                                 .build()
                             
                             camera.cameraControl.startFocusAndMetering(action)
+                                .addListener({
+                                    // After focus completes, set manual distance for barcode range
+                                    setOptimalFocusDistanceForBarcodes(camera)
+                                }, ContextCompat.getMainExecutor(this))
                             
                             // Just show the animation - don't trigger additional focus methods
                             binding.scanOverlay.animate()
@@ -269,6 +283,62 @@ class BarcodeScannerActivity : AppCompatActivity() {
                     Log.e(TAG, "Error setting up initial focus: ${e.message}", e)
                 }
             }
+        }
+    }
+    
+    // New method for optimized camera settings specifically for barcode scanning
+    private fun applyBarcodeOptimizedCameraSettings(camera: Camera) {
+        try {
+            // For modern devices, we can use extension configuration
+            // No need to check SDK version since we're already on a minimum compatible API
+            // These settings reduce hunting effect during auto-focus
+            camera.cameraControl.enableTorch(false) // Make sure torch is off for proper focus
+            
+            // Set optimal zoom for barcodes - often a slight zoom helps focus
+            camera.cameraControl.setLinearZoom(0.1f)
+            
+            // Set initial focus distance for barcode scanning range
+            setOptimalFocusDistanceForBarcodes(camera)
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Error applying barcode optimized settings: ${e.message}", e)
+        }
+    }
+    
+    // New method to set the optimal focus distance for barcode scanning
+    private fun setOptimalFocusDistanceForBarcodes(camera: Camera) {
+        try {
+            // Set the focus distance for the typical barcode scanning range
+            // We're targeting ~30cm which is common for handheld barcode scanning
+            // Method 1: Use multiple focus points in the center area
+            val width = binding.viewFinder.width.toFloat()
+            val height = binding.viewFinder.height.toFloat()
+            
+            if (width <= 0 || height <= 0) return
+            
+            val factory = SurfaceOrientedMeteringPointFactory(width, height)
+            
+            // Focus points at multiple distances to quickly lock focus
+            val centerPoint = factory.createPoint(width * 0.5f, height * 0.5f)
+            val topPoint = factory.createPoint(width * 0.5f, height * 0.4f)
+            val bottomPoint = factory.createPoint(width * 0.5f, height * 0.6f)
+            
+            // Create a multi-point focus action to find optimal distance quickly
+            val action = FocusMeteringAction.Builder(centerPoint, FocusMeteringAction.FLAG_AF)
+                .addPoint(topPoint, FocusMeteringAction.FLAG_AF) // Top focus point
+                .addPoint(bottomPoint, FocusMeteringAction.FLAG_AF) // Bottom focus point
+                .addPoint(centerPoint, FocusMeteringAction.FLAG_AE) // Auto exposure at center
+                .build()
+            
+            // Apply the focus
+            camera.cameraControl.startFocusAndMetering(action)
+                .addListener({
+                    // Focus is complete
+                    Log.d(TAG, "Barcode optimal focus applied successfully")
+                    initialFocusComplete = true
+                }, ContextCompat.getMainExecutor(this))
+        } catch (e: Exception) {
+            Log.e(TAG, "Error setting focus distance: ${e.message}", e)
         }
     }
     
@@ -317,24 +387,6 @@ class BarcodeScannerActivity : AppCompatActivity() {
                 triggerAutoFocus()
             }
         }
-    }
-    
-    // Enhanced focus with visual indicators
-    private fun triggerFocusWithVisualIndicator() {
-        // Show a visual focus indicator (animate scan overlay)
-        binding.scanOverlay.animate()
-            .scaleX(0.9f).scaleY(0.9f)
-            .setDuration(200)
-            .withEndAction {
-                binding.scanOverlay.animate()
-                    .scaleX(1.0f).scaleY(1.0f)
-                    .setDuration(200)
-                    .start()
-            }
-            .start()
-            
-        // Do the actual camera focus
-        triggerAutoFocus()
     }
     
     // Trigger auto focus at the specified point

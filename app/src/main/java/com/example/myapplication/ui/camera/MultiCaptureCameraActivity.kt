@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
@@ -48,6 +49,18 @@ class MultiCaptureCameraActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMultiCaptureCameraBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Set up back press handling
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                // If preview is visible, close it instead of exiting the activity
+                if (binding.imagePreviewContainer.visibility == View.VISIBLE) {
+                    hideFullScreenPreview()
+                } else {
+                    finish()
+                }
+            }
+        })
 
         // Request camera permissions if not already granted
         if (allPermissionsGranted()) {
@@ -252,15 +265,6 @@ class MultiCaptureCameraActivity : AppCompatActivity() {
         }
     }
     
-    override fun onBackPressed() {
-        // If preview is visible, close it instead of exiting the activity
-        if (binding.imagePreviewContainer.visibility == View.VISIBLE) {
-            hideFullScreenPreview()
-        } else {
-            super.onBackPressed()
-        }
-    }
-
     override fun onDestroy() {
         super.onDestroy()
         cameraExecutor.shutdown()

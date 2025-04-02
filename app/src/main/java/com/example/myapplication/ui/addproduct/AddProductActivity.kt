@@ -6,7 +6,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
-import android.text.TextUtils
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
@@ -51,7 +50,7 @@ class AddProductActivity : AppCompatActivity() {
     private lateinit var preferencesManager: PreferencesManager
     
     // For image capture
-    private val imageFiles = mutableListOf<File>()
+    private var imageFiles = mutableListOf<File>()
     private var currentPhotoPath: String = ""
     
     // For multi-capture mode
@@ -146,25 +145,15 @@ class AddProductActivity : AppCompatActivity() {
 
         preferencesManager = PreferencesManager.getInstance(applicationContext)
 
-        // Listen for barcode scan results
-        BarcodeEvent.barcodeData.observe(this) { barcode ->
-            if (barcode.isNotEmpty()) {
-                binding.editTextCode.setText(barcode)
-                
-                // Check if barcode starts with 69 and has 13 digits
-                if (barcode.startsWith("69") && barcode.length == 13) {
-                    lookupBarcodeInfo(barcode)
-                }
-            }
-        }
-
-        // Set up click listeners
-        binding.buttonScanBarcode.setOnClickListener {
-            BarcodeEvent.clearLastBarcode()
-            val intent = Intent(this, CustomBarcodeScannerActivity::class.java)
-            startActivity(intent)
-        }
-
+        // Set initial UI state
+        setupInitialState()
+        
+        // Enhanced input fields with visual feedback and autocomplete
+        setupEnhancedInputFields()
+        
+        // Set up barcode receiver
+        setupBarcodeReceiver()
+        
         binding.buttonSave.setOnClickListener {
             saveProduct()
         }
@@ -177,6 +166,14 @@ class AddProductActivity : AppCompatActivity() {
         // The multi-capture UI is no longer needed since we're using a custom camera
         // So let's hide these elements during initialization
         binding.multiCaptureContainer.visibility = View.GONE
+        
+        // Initialize API lookup switch from preferences
+        binding.switchApiLookup.isChecked = preferencesManager.getUseApiLookup()
+        
+        // Set up listener for API lookup switch
+        binding.switchApiLookup.setOnCheckedChangeListener { _, isChecked ->
+            preferencesManager.saveUseApiLookup(isChecked)
+        }
     }
 
     // Add support for physical scan button
@@ -185,9 +182,14 @@ class AddProductActivity : AppCompatActivity() {
         val boundScanKey = preferencesManager.getScanButtonKeyCode()
         
         if (boundScanKey != null && keyCode == boundScanKey) {
-            // Launch the barcode scanner
+            // Launch the barcode scanner with the appropriate scanning flag based on focus
             BarcodeEvent.clearLastBarcode()
             val intent = Intent(this, CustomBarcodeScannerActivity::class.java)
+            
+            // Only scan for barcode now that the product code field is removed
+            intent.putExtra("SCAN_FOR_BARCODE", true)
+            
+            Log.d(TAG, "Launching barcode scanner, scanning for barcode")
             startActivity(intent)
             return true
         }
@@ -195,9 +197,131 @@ class AddProductActivity : AppCompatActivity() {
         return super.onKeyDown(keyCode, event)
     }
 
+    private fun setupInitialState() {
+        // Initialize image count display
+        updateImageCountDisplay()
+        
+        // Set up image gallery container
+        binding.imageGalleryContainer.removeAllViews()
+    }
+
+    /**
+     * Updates the image count display text based on the number of images
+     */
+    private fun updateImageCountDisplay() {
+        // Set the text showing how many images have been captured
+        binding.textImageCount.text = getString(R.string.image_count_format, imageFiles.size)
+    }
+
+    /**
+     * Setup enhanced input fields with visual feedback and auto-completion
+     */
+    private fun setupEnhancedInputFields() {
+        // Product code field removed
+        
+        // Barcode field enhancements
+        binding.editTextBarcode.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                binding.editTextBarcode.setBackgroundColor(android.graphics.Color.parseColor("#E3F2FD")) // Light blue
+                Log.d(TAG, "Barcode field has focus")
+            } else {
+                binding.editTextBarcode.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+            }
+        }
+        
+        // Make the barcode field and layout clickable for easier focus
+        binding.editTextBarcode.setOnClickListener {
+            binding.editTextBarcode.requestFocus()
+        }
+        
+        // Auto-capitalization for name field
+        binding.editTextName.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                if (s?.isNotEmpty() == true && s.length == 1) {
+                    s.replace(0, 1, s.substring(0, 1).uppercase())
+                }
+            }
+        })
+        
+        // Format price input for cost field
+        binding.editTextCost.addTextChangedListener(object : android.text.TextWatcher {
+            private var isFormatting = false
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                if (isFormatting) return
+                isFormatting = true
+                
+                val text = s.toString().replace("[^\\d.]".toRegex(), "")
+                try {
+                    val price = text.toDoubleOrNull() ?: 0.0
+                    // Format to 2 decimal places without the currency symbol
+                    val formatted = String.format("%.2f", price)
+                    if (formatted != s.toString()) {
+                        s?.replace(0, s.length, formatted)
+                    }
+                } catch (e: Exception) {
+                    // Just leave the text as is if there's an error
+                }
+                
+                isFormatting = false
+            }
+        })
+        
+        // Add auto-lookup on barcode input
+        binding.editTextBarcode.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                val barcode = s.toString().trim()
+                if (barcode.length == 13 && barcode.startsWith("69") && binding.switchApiLookup.isChecked) {
+                    lookupBarcodeInfo(barcode)
+                }
+            }
+        })
+    }
+
+    private fun setupBarcodeReceiver() {
+        // Listen for barcode scan events
+        BarcodeEvent.barcodeData.observe(this) { barcode ->
+            if (!barcode.isNullOrEmpty()) {
+                Log.d(TAG, "BarcodeEvent received: $barcode")
+                
+                // Only play a sound if one hasn't been played already for this barcode
+                if (!BarcodeEvent.hasSoundBeenPlayed()) {
+                    Log.d(TAG, "Playing sound for barcode: $barcode")
+                    SoundUtil.playScanBeep()
+                    BarcodeEvent.markSoundPlayed()
+                }
+                
+                // Set the barcode field
+                binding.editTextBarcode.setText(barcode)
+                binding.editTextBarcode.requestFocus()  // Ensure focus stays on barcode field
+                Toast.makeText(this, getString(R.string.barcode_field_filled), Toast.LENGTH_SHORT).show()
+                
+                // Look up product info if barcode is from a public database (starts with '69')
+                // and API lookup is enabled
+                if (barcode.startsWith("69") && barcode.length == 13 && binding.switchApiLookup.isChecked) {
+                    lookupBarcodeInfo(barcode)
+                }
+                
+                // Clear the scanned barcode to prevent duplicate processing
+                BarcodeEvent.clearLastBarcode()
+            }
+        }
+    }
+
     fun lookupBarcodeInfo(barcode: String) {
         // Clear the barcode event data to prevent reprocessing
         BarcodeEvent.clearLastBarcode()
+        
+        // Check if API lookup is enabled
+        if (!binding.switchApiLookup.isChecked) {
+            Log.d(TAG, "API lookup is disabled, skipping lookup for barcode: $barcode")
+            return
+        }
         
         // Show loading indicator
         binding.progressBar.visibility = View.VISIBLE
@@ -293,51 +417,51 @@ class AddProductActivity : AppCompatActivity() {
     }
 
     private fun saveProduct() {
-        // Validate required fields
-        val code = binding.editTextCode.text.toString().trim()
+        // Get field values
+        val barcode = binding.editTextBarcode.text.toString().trim()
         val name = binding.editTextName.text.toString().trim()
         val specs = binding.editTextSpecs.text.toString().trim()
-        
-        if (TextUtils.isEmpty(code) || TextUtils.isEmpty(name) || TextUtils.isEmpty(specs)) {
-            Toast.makeText(this, "Code, name, and specs are required", Toast.LENGTH_SHORT).show()
-            SoundUtil.playScanBeep()
+        val costStr = binding.editTextCost.text.toString().trim()
+        val stockStr = binding.editTextStock.text.toString().trim()
+        val location = binding.editTextLocation.text.toString().trim()
+        val link = binding.editTextLink.text.toString().trim()
+
+        // Validate required fields - product code, barcode and specs are now optional
+        if (name.isEmpty()) {
+            Toast.makeText(this, "Please enter a product name", Toast.LENGTH_SHORT).show()
             return
         }
-        
-        // Optional fields
-        val costText = binding.editTextCost.text.toString().trim()
-        val cost = if (costText.isNotEmpty()) costText.toFloatOrNull() else null
-        val location = binding.editTextLocation.text.toString().trim().takeIf { it.isNotEmpty() }
-        val stockText = binding.editTextStock.text.toString().trim()
-        val stock = if (stockText.isNotEmpty()) stockText.toIntOrNull() else null
-        val link = binding.editTextLink.text.toString().trim().takeIf { it.isNotEmpty() }
-        
-        // Cost validation
-        if (costText.isNotEmpty() && cost == null) {
-            Toast.makeText(this, "Invalid cost value", Toast.LENGTH_SHORT).show()
+
+        // Parse numeric values
+        val cost = if (costStr.isNotEmpty()) costStr.toFloatOrNull() else null
+        val stock = if (stockStr.isNotEmpty()) stockStr.toIntOrNull() else null
+
+        if (costStr.isNotEmpty() && cost == null) {
+            Toast.makeText(this, "Please enter a valid cost value", Toast.LENGTH_SHORT).show()
             return
         }
-        
-        // Stock validation
-        if (stockText.isNotEmpty() && stock == null) {
-            Toast.makeText(this, "Invalid stock value", Toast.LENGTH_SHORT).show()
+
+        if (stockStr.isNotEmpty() && stock == null) {
+            Toast.makeText(this, "Please enter a valid stock value", Toast.LENGTH_SHORT).show()
             return
         }
+
+        // Show loading indicator
+        binding.progressBar.visibility = View.VISIBLE
+
+        // Use barcode as product code identifier if available
+        // If not provided, the server will generate a unique code
+        val productCode = if (barcode.isNotEmpty()) barcode else null
         
-        // Create product object
         val product = Product(
-            code = code,
+            code = productCode, // Server will handle empty code generation
             name = name,
             description = specs,
             quantity = stock,
-            location = location,
+            location = if (location.isEmpty()) null else location,
             cost = cost,
-            link = link
+            link = if (link.isEmpty()) null else link
         )
-        
-        // Show loading
-        binding.progressBar.visibility = View.VISIBLE
-        binding.buttonSave.isEnabled = false
         
         // Submit product to API
         lifecycleScope.launch(Dispatchers.IO) {
@@ -345,9 +469,17 @@ class AddProductActivity : AppCompatActivity() {
                 val response = NetworkModule.stockSyncApi.addProduct(product)
                 
                 if (response.isSuccessful) {
+                    // Get the product code from the response or use barcode
+                    val responseBody = response.body()
+                    val responseCode = if (responseBody != null && responseBody.data is Map<*, *>) {
+                        (responseBody.data as Map<*, *>)["code"]?.toString() ?: barcode
+                    } else {
+                        barcode // Fallback to barcode if we can't extract the code
+                    }
+                    
                     // If we have images, upload them
                     if (imageFiles.isNotEmpty()) {
-                        uploadProductImages(code)
+                        uploadProductImages(responseCode)
                     } else {
                         // No images to upload, just finish
                         withContext(Dispatchers.Main) {
@@ -394,79 +526,60 @@ class AddProductActivity : AppCompatActivity() {
     }
     
     // Upload product images to the API
-    private suspend fun uploadProductImages(productCode: String) {
-        try {
-            // Show progress indicator
-            binding.progressBar.visibility = View.VISIBLE
-            
-            // Convert each image file to base64 encoded string
-            val base64Images = mutableListOf<String>()
-            val imagesRequest = mutableMapOf<String, String>()
-            
-            // Set the product code
-            imagesRequest["code"] = productCode
-            
-            // Convert each image to base64 and add to the request
-            imageFiles.forEachIndexed { index, file ->
-                Log.d(TAG, "Converting image ${index + 1} to base64: ${file.absolutePath}")
-                
-                // Convert file to base64 data URI
-                val base64 = ImageUtil.fileToBase64DataUri(file)
-                if (base64 != null) {
-                    // Add to the request with key "image1", "image2", etc.
-                    val imageKey = "image${index + 1}"
-                    imagesRequest[imageKey] = base64
-                    Log.d(TAG, "Added image $imageKey (${base64.length} chars)")
-                } else {
-                    Log.e(TAG, "Failed to convert image ${index + 1} to base64")
-                }
-            }
-            
-            // Upload the images if we have any
-            if (imagesRequest.size > 1) { // > 1 because we have the code field
-                Log.d(TAG, "Uploading ${imagesRequest.size - 1} images for product $productCode")
-                val response = NetworkModule.stockSyncApi.uploadProductImages(imagesRequest)
-                
-                withContext(Dispatchers.Main) {
-                    binding.progressBar.visibility = View.GONE
-                    binding.buttonSave.isEnabled = true
-                    
-                    if (response.isSuccessful) {
-                        Toast.makeText(this@AddProductActivity, "Product and images saved successfully", Toast.LENGTH_SHORT).show()
-                        SoundUtil.playScanBeep()
-                        finish()
+    private fun uploadProductImages(productCode: String) {
+        Log.d(TAG, "Starting to upload ${imageFiles.size} images for product code: $productCode")
+        
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                // Convert images to base64
+                val base64Images = mutableListOf<String>()
+                for (file in imageFiles) {
+                    val base64 = ImageUtil.fileToBase64DataUri(file)
+                    if (base64 != null) {
+                        base64Images.add(base64)
+                        Log.d(TAG, "Successfully converted image to base64: ${file.name}, length: ${base64.length}")
                     } else {
-                        val errorBody = response.errorBody()?.string() ?: "Unknown error"
-                        Toast.makeText(
-                            this@AddProductActivity,
-                            "Product saved but image upload failed: $errorBody",
-                            Toast.LENGTH_LONG
-                        ).show()
-                        SoundUtil.playScanBeep()
-                        finish()
+                        Log.e(TAG, "Failed to convert image to base64: ${file.absolutePath}")
                     }
                 }
-            } else {
-                // No images to upload
+                
+                if (base64Images.isEmpty()) {
+                    withContext(Dispatchers.Main) {
+                        binding.progressBar.visibility = View.GONE
+                        Toast.makeText(this@AddProductActivity, "Failed to process images", Toast.LENGTH_SHORT).show()
+                    }
+                    return@launch
+                }
+                
+                // Create request body
+                val requestBody = mapOf(
+                    "code" to productCode,
+                    *base64Images.mapIndexed { index, base64 -> 
+                        "image${index + 1}" to base64 
+                    }.toTypedArray()
+                )
+                
+                // Upload images
+                val response = NetworkModule.stockSyncApi.uploadProductImages(requestBody)
+                
+                // Handle response on main thread
                 withContext(Dispatchers.Main) {
                     binding.progressBar.visibility = View.GONE
-                    binding.buttonSave.isEnabled = true
-                    Toast.makeText(this@AddProductActivity, "Product saved but no images were uploaded", Toast.LENGTH_SHORT).show()
-                    finish()
+                    if (response.isSuccessful) {
+                        // Success
+                        Toast.makeText(this@AddProductActivity, "Product added and images uploaded successfully", Toast.LENGTH_SHORT).show()
+                        finish()
+                    } else {
+                        // Error
+                        Toast.makeText(this@AddProductActivity, "Failed to upload images: ${response.message()}", Toast.LENGTH_SHORT).show()
+                    }
                 }
-            }
-        } catch (e: Exception) {
-            withContext(Dispatchers.Main) {
-                binding.progressBar.visibility = View.GONE
-                binding.buttonSave.isEnabled = true
-                Toast.makeText(
-                    this@AddProductActivity,
-                    "Product saved but image upload failed: ${e.message}",
-                    Toast.LENGTH_LONG
-                ).show()
-                SoundUtil.playScanBeep()
-                Log.e(TAG, "Error uploading images", e)
-                finish()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error uploading images: ${e.message}", e)
+                withContext(Dispatchers.Main) {
+                    binding.progressBar.visibility = View.GONE
+                    Toast.makeText(this@AddProductActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
@@ -481,76 +594,6 @@ class AddProductActivity : AppCompatActivity() {
         }
     }
 
-    // Check permissions before taking a photo
-    private fun checkPermissionsAndTakePhoto() {
-        try {
-            // If we're already in multi-capture mode and have taken at least one photo,
-            // we can skip the permission check as we already have the necessary permissions
-            if (isMultiCaptureMode && multiCaptureCount > 0) {
-                dispatchTakePictureIntent()
-                return
-            }
-            
-            // Regular permission flow for first photo
-            // Check for CAMERA permission first (most critical)
-            val cameraPermission = android.Manifest.permission.CAMERA
-            val hasCameraPermission = ContextCompat.checkSelfPermission(
-                this, 
-                cameraPermission
-            ) == PackageManager.PERMISSION_GRANTED
-            
-            Log.d(TAG, "Camera permission status: ${if (hasCameraPermission) "GRANTED" else "DENIED"}")
-            
-            // If we have camera permission, determine if we need storage permissions based on Android version
-            if (hasCameraPermission) {
-                // On Android 10+ (API 29+), we don't need external storage permissions for app-specific files
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                    // We have camera permission and don't need storage permission on Android 10+
-                    Log.d(TAG, "Running on Android 10+, no storage permissions needed")
-                    dispatchTakePictureIntent()
-                } else {
-                    // Pre-Android 10 needs storage permissions
-                    val writePermission = android.Manifest.permission.WRITE_EXTERNAL_STORAGE
-                    val readPermission = android.Manifest.permission.READ_EXTERNAL_STORAGE
-                    
-                    val hasWritePermission = ContextCompat.checkSelfPermission(
-                        this, 
-                        writePermission
-                    ) == PackageManager.PERMISSION_GRANTED
-                    
-                    val hasReadPermission = ContextCompat.checkSelfPermission(
-                        this, 
-                        readPermission
-                    ) == PackageManager.PERMISSION_GRANTED
-                    
-                    Log.d(TAG, "Storage permissions: Read=${if (hasReadPermission) "GRANTED" else "DENIED"}, Write=${if (hasWritePermission) "GRANTED" else "DENIED"}")
-                    
-                    // If any permission is missing, request it
-                    if (!hasWritePermission || !hasReadPermission) {
-                        Log.d(TAG, "Requesting storage permissions")
-                        val permissionsToRequest = mutableListOf<String>()
-                        
-                        if (!hasWritePermission) permissionsToRequest.add(writePermission)
-                        if (!hasReadPermission) permissionsToRequest.add(readPermission)
-                        
-                        requestPermissionLauncher.launch(permissionsToRequest.toTypedArray())
-                    } else {
-                        // We have all permissions, proceed with taking photo
-                        Log.d(TAG, "All permissions granted, taking photo")
-                        dispatchTakePictureIntent()
-                    }
-                }
-            } else {
-                // Need to request camera permission
-                Log.d(TAG, "Requesting camera permission")
-                requestPermissionLauncher.launch(arrayOf(cameraPermission))
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error checking permissions", e)
-            Toast.makeText(this, getString(R.string.error_checking_permissions, e.message), Toast.LENGTH_SHORT).show()
-        }
-    }
-    
     // Create a unique file for storing the image
     private fun createImageFile(): File {
         // Create an image file name
@@ -708,8 +751,8 @@ class AddProductActivity : AppCompatActivity() {
             binding.imageGalleryContainer.addView(thumbnailView)
         }
         
-        // Update the image count
-        binding.textImageCount.setText(getString(R.string.image_count_format, imageFiles.size))
+        // Update the image count using property access
+        binding.textImageCount.text = getString(R.string.image_count_format, imageFiles.size)
     }
 
     override fun onDestroy() {
@@ -738,11 +781,6 @@ class AddProductActivity : AppCompatActivity() {
         // This is no longer needed since we're using a custom camera
         // Instead, we'll show a toast with the current count
         Toast.makeText(this, getString(R.string.photos_taken, multiCaptureCount), Toast.LENGTH_SHORT).show()
-    }
-
-    private fun exitMultiCaptureMode() {
-        // No longer needed as the custom camera handles this
-        isMultiCaptureMode = false
     }
 
     // Launch the multi-capture camera activity

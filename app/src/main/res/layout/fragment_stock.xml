@@ -6,190 +6,180 @@
     android:layout_height="match_parent"
     android:padding="16dp">
 
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/stock_card"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:cardCornerRadius="8dp"
-        app:cardElevation="4dp"
-        app:layout_constraintTop_toTopOf="parent">
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
 
-        <LinearLayout
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/stock_card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp"
+            app:layout_constraintTop_toTopOf="parent">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/stock_title"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="16dp" />
-
-            <RadioGroup
-                android:id="@+id/stock_action_group"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="16dp">
-
-                <RadioButton
-                    android:id="@+id/in_stock_radio"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/in_stock_button"
-                    android:checked="true" />
-
-                <RadioButton
-                    android:id="@+id/out_stock_radio"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/out_stock_button" />
-
-            </RadioGroup>
-
-            <!-- Product Code with Scan Button -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="8dp">
+                android:orientation="vertical"
+                android:padding="16dp">
 
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/product_code_layout"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:hint="@string/product_code"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/product_code_input"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:inputType="text" />
-
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <Button
-                    android:id="@+id/scan_product_button"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                <RadioGroup
+                    android:id="@+id/stock_action_group"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="@string/scan_button"
-                    app:icon="@drawable/ic_barcode_scan" />
-            </LinearLayout>
+                    android:layout_gravity="center_horizontal"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="16dp">
 
-            <!-- Current product location (visible when product already exists) -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/existing_location_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                android:visibility="gone"
-                app:cardBackgroundColor="#E8F5E9"
-                app:cardCornerRadius="4dp"
-                app:cardElevation="0dp">
+                    <RadioButton
+                        android:id="@+id/in_stock_radio"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="16dp"
+                        android:text="@string/in_stock_button"
+                        android:checked="true" />
 
+                    <RadioButton
+                        android:id="@+id/out_stock_radio"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/out_stock_button" />
+
+                </RadioGroup>
+
+                <!-- Product Code with Scan Button -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="8dp">
+                    android:orientation="horizontal"
+                    android:baselineAligned="false"
+                    android:gravity="center"
+                    android:layout_marginBottom="8dp">
 
-                    <TextView
-                        android:layout_width="match_parent"
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/product_code_layout"
+                        android:layout_width="250dp"
                         android:layout_height="wrap_content"
-                        android:text="@string/current_location"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
+                        android:hint="@string/product_code"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-                    <TextView
-                        android:id="@+id/existing_location_value"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:letterSpacing="0.1"
-                        android:textColor="#2E7D32"
-                        android:textSize="32sp"
-                        android:textStyle="bold"
-                        tools:text="A1B2" />
-                    
-                    <TextView
-                        android:id="@+id/existing_location_hint"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/product_already_in_stock_at_this_location"
-                        android:textSize="14sp"
-                        android:textStyle="italic"
-                        android:gravity="center" />
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/product_code_input"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textColor="#DE000000"
+                            android:inputType="text" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/quantity_layout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                android:hint="@string/quantity"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/quantity_input"
+                <!-- Current product location (visible when product already exists) -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/existing_location_card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="number"
-                    android:text="@string/_1" />
+                    android:layout_marginBottom="8dp"
+                    android:visibility="gone"
+                    app:cardBackgroundColor="#E8F5E9"
+                    app:cardCornerRadius="4dp"
+                    app:cardElevation="0dp">
 
-            </com.google.android.material.textfield.TextInputLayout>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="8dp">
 
-            <!-- Location with Scan Button -->
-            <LinearLayout
-                android:id="@+id/location_container"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="16dp">
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/current_location"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/existing_location_value"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:letterSpacing="0.1"
+                            android:textColor="#2E7D32"
+                            android:textSize="32sp"
+                            android:textStyle="bold"
+                            tools:text="A1B2" />
+                        
+                        <TextView
+                            android:id="@+id/existing_location_hint"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/product_already_in_stock_at_this_location"
+                            android:textSize="14sp"
+                            android:textStyle="italic"
+                            android:gravity="center" />
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
 
                 <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/location_layout"
-                    android:layout_width="0dp"
+                    android:id="@+id/quantity_layout"
+                    android:layout_width="150dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:hint="@string/location"
+                    android:layout_marginBottom="8dp"
+                    android:layout_gravity="center_horizontal"
+                    android:hint="@string/quantity"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
                     <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/location_input"
+                        android:id="@+id/quantity_input"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="text" />
+                        android:textColor="#000000"
+                        android:inputType="number"
+                        android:text="@string/_1" />
 
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <!-- Location with Scan Button -->
+                <LinearLayout
+                    android:id="@+id/location_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:baselineAligned="false"
+                    android:gravity="center"
+                    android:layout_marginBottom="16dp">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/location_layout"
+                        android:layout_width="250dp"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/location"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/location_input"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textColor="#DE000000"
+                            android:inputType="text"
+                            android:imeOptions="actionDone" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+
                 <Button
-                    android:id="@+id/scan_location_button"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:id="@+id/submit_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="@string/scan_button"
-                    app:icon="@drawable/ic_barcode_scan" />
+                    android:layout_gravity="center_horizontal"
+                    android:text="@string/submit" />
+
             </LinearLayout>
-
-            <Button
-                android:id="@+id/submit_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/submit" />
-
-        </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
+        </com.google.android.material.card.MaterialCardView>
+    </ScrollView>
 
     <ProgressBar
         android:id="@+id/progress_bar"

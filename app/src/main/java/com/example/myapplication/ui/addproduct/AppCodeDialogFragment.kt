@@ -35,7 +35,7 @@ class AppCodeDialogFragment : DialogFragment() {
                     // If we're in AddProductActivity, try to look up the barcode
                     val activity = activity
                     if (activity is AddProductActivity) {
-                        val barcode = activity.findViewById<EditText>(R.id.editTextCode)?.text?.toString()
+                        val barcode = activity.findViewById<EditText>(R.id.editTextBarcode)?.text?.toString()
                         if (!barcode.isNullOrEmpty() && barcode.startsWith("69") && barcode.length == 13) {
                             activity.lookupBarcodeInfo(barcode)
                         }

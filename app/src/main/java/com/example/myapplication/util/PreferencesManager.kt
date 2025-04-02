@@ -15,6 +15,7 @@ class PreferencesManager(context: Context) {
         private const val KEY_SCAN_BUTTON_KEYCODE = "scan_button_keycode"
         private const val KEY_SCAN_BUTTON_NAME = "scan_button_name"
         private const val KEY_BARCODE_APPCODE = "barcode_appcode"
+        private const val KEY_USE_API_LOOKUP = "use_api_lookup"
         
         @Volatile
         private var instance: PreferencesManager? = null
@@ -89,5 +90,19 @@ class PreferencesManager(context: Context) {
      */
     fun getBarcodeAppCode(): String? {
         return preferences.getString(KEY_BARCODE_APPCODE, null)
+    }
+    
+    /**
+     * Save the API lookup preference
+     */
+    fun saveUseApiLookup(useApiLookup: Boolean) {
+        preferences.edit().putBoolean(KEY_USE_API_LOOKUP, useApiLookup).apply()
+    }
+    
+    /**
+     * Get whether to use API lookup for barcodes (default: true)
+     */
+    fun getUseApiLookup(): Boolean {
+        return preferences.getBoolean(KEY_USE_API_LOOKUP, true)
     }
 } 

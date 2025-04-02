@@ -58,18 +58,39 @@ class MoveStockFragment : Fragment() {
     
     private fun processBarcodeResult(barcodeValue: String) {
         isProcessingBarcode = true
+        Log.d(TAG, "Processing barcode: $barcodeValue, current target: $currentScanTarget")
         
         when (currentScanTarget) {
             ScanTarget.PRODUCT_CODE -> {
                 binding.productCodeInput.setText(barcodeValue)
+                Toast.makeText(requireContext(), getString(R.string.barcode_filled_search), Toast.LENGTH_SHORT).show()
                 
                 // Check if the product exists in stock
                 checkIfProductExists(barcodeValue)
             }
             ScanTarget.LOCATION -> {
                 binding.locationInput.setText(barcodeValue)
+                Toast.makeText(requireContext(), getString(R.string.location_set), Toast.LENGTH_SHORT).show()
+                
                 // Focus on submit button after scanning location
                 binding.changeLocationButton.requestFocus()
+                
+                // If product code is filled, location is filled, and product is in stock,
+                // automatically submit the form after a short delay
+                val productCode = binding.productCodeInput.text.toString().trim()
+                val location = barcodeValue.trim()
+                
+                if (productCode.isNotEmpty() && location.isNotEmpty() && isProductInStock) {
+                    Log.d(TAG, "All fields filled, automatically submitting after delay")
+                    
+                    // Auto-submit after a short delay to allow the user to see the scanned location
+                    Toast.makeText(requireContext(), getString(R.string.auto_submitting), Toast.LENGTH_SHORT).show()
+                    
+                    view?.postDelayed({
+                        changeProductLocation()
+                    }, 1000) // 1 second delay
+                }
+                
                 resetProcessingFlag()
             }
         }
@@ -86,9 +107,19 @@ class MoveStockFragment : Fragment() {
     private fun checkIfProductExists(productCode: String) {
         binding.progressBar.visibility = View.VISIBLE
         
+        // Determine if the input is a barcode (starts with 69 and is 13 digits)
+        val isBarcode = productCode.startsWith("69") && productCode.length == 13
+        Log.d(TAG, "Checking product with ${if (isBarcode) "barcode" else "code"}: $productCode")
+        
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val response = NetworkModule.stockSyncApi.getProductByCode(productCode)
+                // Call the appropriate API endpoint based on input format
+                val response = if (isBarcode) {
+                    NetworkModule.stockSyncApi.getProductByBarcode(productCode)
+                } else {
+                    NetworkModule.stockSyncApi.getProductByCode(productCode)
+                }
+                
                 binding.progressBar.visibility = View.GONE
                 
                 if (response.isSuccessful && response.body() != null) {
@@ -97,7 +128,7 @@ class MoveStockFragment : Fragment() {
                     if (productResponse.success) {
                         val product = productResponse.product
                         // Check if the product has stock (quantity > 0)
-                        if ((product.quantity ?: 0)                                                                                         > 0) {
+                        if ((product.quantity ?: 0) > 0) {
                             handleExistingProduct(product)
                         } else {
                             handleNoStockProduct(productCode)
@@ -207,17 +238,10 @@ class MoveStockFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        // Set up the scan buttons
-        binding.scanProductButton.setOnClickListener {
-            currentScanTarget = ScanTarget.PRODUCT_CODE
-            launchBarcodeScanner()
-        }
         
-        binding.scanLocationButton.setOnClickListener {
-            currentScanTarget = ScanTarget.LOCATION
-            launchBarcodeScanner()
-        }
+        // Enhanced input field behaviors
+        setupProductCodeField()
+        setupLocationField()
         
         // Set up the change location button
         binding.changeLocationButton.setOnClickListener {
@@ -228,9 +252,19 @@ class MoveStockFragment : Fragment() {
         BarcodeEvent.barcodeData.observe(viewLifecycleOwner) { barcode ->
             // Only process non-empty barcodes and ones that aren't from a tab switch
             if (!barcode.isNullOrEmpty() && barcode.trim().isNotEmpty() && !isProcessingBarcode) {
-                // Play a beep sound when barcode is received
-                SoundUtil.playScanBeep()
+                Log.d(TAG, "BarcodeEvent received: $barcode")
+                
+                // Only play a sound if one hasn't been played already for this barcode
+                if (!BarcodeEvent.hasSoundBeenPlayed()) {
+                    Log.d(TAG, "Playing sound for barcode: $barcode")
+                    SoundUtil.playScanBeep()
+                    BarcodeEvent.markSoundPlayed()
+                }
+                
                 processBarcodeResult(barcode)
+                
+                // Clear the barcode from the event after processing
+                BarcodeEvent.clearLastBarcode()
             }
         }
     }
@@ -297,13 +331,25 @@ class MoveStockFragment : Fragment() {
         // Log the server address being used
         val serverAddress = PreferencesManager.getInstance(requireContext()).getServerAddress()
         Log.d(TAG, "Changing location for product: $productCode to: $location - Server: $serverAddress")
+        
+        // Determine if the input is a barcode
+        val isBarcode = productCode.startsWith("69") && productCode.length == 13
+        Log.d(TAG, "Using ${if (isBarcode) "barcode" else "product code"} for move stock operation")
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val request = MoveStockRequest(
-                    code = productCode,
-                    location = location
-                )
+                // Create request based on whether we have a barcode or product code
+                val request = if (isBarcode) {
+                    MoveStockRequest(
+                        barcode = productCode,
+                        location = location
+                    )
+                } else {
+                    MoveStockRequest(
+                        code = productCode,
+                        location = location
+                    )
+                }
 
                 val response = NetworkModule.stockSyncApi.changeProductLocation(request)
                 binding.progressBar.visibility = View.GONE
@@ -376,5 +422,68 @@ class MoveStockFragment : Fragment() {
         super.onStop()
         // Clear last barcode when leaving the fragment to prevent processing in other fragments
         BarcodeEvent.clearLastBarcode()
+    }
+
+    /**
+     * Setup enhanced behavior for the product code field
+     */
+    private fun setupProductCodeField() {
+        // Improve visibility when focused
+        binding.productCodeInput.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                binding.productCodeInput.setBackgroundColor(android.graphics.Color.parseColor("#E8F5E9")) // Light green
+                currentScanTarget = ScanTarget.PRODUCT_CODE
+                Log.d(TAG, "Product code field has focus")
+            } else {
+                binding.productCodeInput.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+            }
+        }
+        
+        // Add text change listener to automatically search for product
+        binding.productCodeInput.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                // Don't auto-search while we're processing a barcode to prevent duplicate searches
+                if (!isProcessingBarcode && s?.length ?: 0 >= 5) {
+                    val code = s.toString().trim()
+                    if (code.isNotEmpty()) {
+                        // Small delay before auto-searching
+                        view?.postDelayed({
+                            if (code == binding.productCodeInput.text.toString().trim()) {
+                                Log.d(TAG, "Auto-searching for product: $code")
+                                checkIfProductExists(code)
+                            }
+                        }, 800) // 800ms delay
+                    }
+                }
+            }
+        })
+        
+        // Make the entire input layout clickable for easier focus
+        binding.productCodeLayout.setOnClickListener {
+            binding.productCodeInput.requestFocus()
+        }
+    }
+    
+    /**
+     * Setup enhanced behavior for the location field
+     */
+    private fun setupLocationField() {
+        // Improve visibility when focused
+        binding.locationInput.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                binding.locationInput.setBackgroundColor(android.graphics.Color.parseColor("#E3F2FD")) // Light blue
+                currentScanTarget = ScanTarget.LOCATION
+                Log.d(TAG, "Location field has focus")
+            } else {
+                binding.locationInput.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+            }
+        }
+        
+        // Make the entire input layout clickable for easier focus
+        binding.locationLayout.setOnClickListener {
+            binding.locationInput.requestFocus()
+        }
     }
 } 
