@@ -13,7 +13,9 @@ import android.view.KeyEvent
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.core.ExperimentalGetImage
 import androidx.core.content.FileProvider
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
@@ -179,6 +181,7 @@ class AddProductActivity : AppCompatActivity() {
     }
 
     // Add support for physical scan button
+    @OptIn(ExperimentalGetImage::class)
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         // Check if this key matches the bound scan button
         val boundScanKey = preferencesManager.getScanButtonKeyCode()

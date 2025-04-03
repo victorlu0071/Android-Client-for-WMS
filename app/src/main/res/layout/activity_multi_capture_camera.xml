@@ -12,6 +12,32 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <!-- Focus indicator -->
+    <ImageView
+        android:id="@+id/focusIndicator"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:src="@drawable/focus_circle"
+        android:visibility="invisible"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:contentDescription="@string/focus_indicator" />
+        
+    <!-- Focus state text -->
+    <TextView
+        android:id="@+id/focusStateText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:background="#33000000"
+        android:padding="8dp"
+        android:text="@string/focusing"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        android:visibility="invisible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <!-- Full-screen image preview container -->
     <FrameLayout
         android:id="@+id/imagePreviewContainer"

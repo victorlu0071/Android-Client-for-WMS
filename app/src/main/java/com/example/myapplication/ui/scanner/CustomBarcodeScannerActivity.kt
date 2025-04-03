@@ -35,7 +35,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
-@androidx.annotation.OptIn(ExperimentalGetImage::class)
+@ExperimentalGetImage
 class CustomBarcodeScannerActivity : AppCompatActivity() {
 
     companion object {
@@ -120,7 +120,15 @@ class CustomBarcodeScannerActivity : AppCompatActivity() {
         // Handle focus on touch
         binding.viewFinder.setOnTouchListener { view, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
+                // Update instructions to indicate focusing is in progress
+                updateScanInstructions(getString(R.string.scanning_in_progress))
+                
+                // Show visual feedback with focus animation
+                showFocusAnimation()
+                
+                // Trigger the focus at touch point
                 triggerFocus(event.x, event.y)
+                
                 view.performClick()
                 return@setOnTouchListener true
             }
@@ -298,7 +306,6 @@ class CustomBarcodeScannerActivity : AppCompatActivity() {
             }
         }
     }
-    @androidx.annotation.OptIn(ExperimentalGetImage::class)
 
     private fun showScanResultAnimation() {
         // Show a success indicator animation
@@ -329,6 +336,12 @@ class CustomBarcodeScannerActivity : AppCompatActivity() {
         val boundScanKey = preferencesManager.getScanButtonKeyCode()
         
         if (boundScanKey != null && keyCode == boundScanKey) {
+            // Update instructions to indicate focusing is in progress
+            updateScanInstructions(getString(R.string.scanning_in_progress))
+            
+            // Show visual feedback with focus animation
+            showFocusAnimation()
+            
             // Trigger center focus
             val width = binding.viewFinder.width.toFloat()
             val height = binding.viewFinder.height.toFloat()
@@ -341,6 +354,12 @@ class CustomBarcodeScannerActivity : AppCompatActivity() {
         
         // Handle volume buttons as focus triggers
         if (keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+            // Update instructions to indicate focusing is in progress
+            updateScanInstructions(getString(R.string.scanning_in_progress))
+            
+            // Show visual feedback with focus animation
+            showFocusAnimation()
+            
             val width = binding.viewFinder.width.toFloat()
             val height = binding.viewFinder.height.toFloat()
             
@@ -421,7 +440,7 @@ class CustomBarcodeScannerActivity : AppCompatActivity() {
         cameraExecutor.shutdown()
     }
 
-    @androidx.annotation.OptIn(ExperimentalGetImage::class)
+    @ExperimentalGetImage
     private fun processImageForBarcodes(imageProxy: ImageProxy) {
         val mediaImage = imageProxy.image
         if (mediaImage != null && isScanning.get()) {
@@ -470,5 +489,32 @@ class CustomBarcodeScannerActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e(TAG, "Error configuring camera for barcode scanning: ${e.message}", e)
         }
+    }
+
+    @Suppress("unused")
+    @ExperimentalGetImage
+    private fun showFocusAnimation() {
+        // Animate scan overlay as visual feedback
+        binding.scanOverlay.animate()
+            .scaleX(0.9f).scaleY(0.9f)
+            .alpha(0.7f)
+            .setDuration(200)
+            .withEndAction {
+                binding.scanOverlay.animate()
+                    .scaleX(1.0f).scaleY(1.0f)
+                    .alpha(1.0f)
+                    .setDuration(200)
+                    .start()
+            }
+            .start()
+        
+        // After focus animation completes, restore the original instruction text based on mode
+        binding.scanOverlay.postDelayed({
+            if (scanningForBarcode) {
+                updateScanInstructions(getString(R.string.scan_product_barcode_instruction))
+            } else {
+                updateScanInstructions(getString(R.string.scan_barcode_instruction))
+            }
+        }, 1500) // Wait 1.5 seconds before restoring original text
     }
 } 
