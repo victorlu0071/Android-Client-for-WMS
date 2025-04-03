@@ -20,8 +20,6 @@ import com.example.myapplication.ui.scanner.CustomBarcodeScannerActivity
 import com.example.myapplication.util.BarcodeEvent
 import com.example.myapplication.util.SoundUtil
 import kotlinx.coroutines.launch
-import retrofit2.HttpException
-import java.io.IOException
 import androidx.core.graphics.toColorInt
 import com.example.myapplication.R
 import androidx.core.content.ContextCompat
@@ -100,7 +98,7 @@ class StockFragment : Fragment() {
                             submitStockChange()
                         }, 1000) // 1 second delay
                     }
-                } catch (e: NumberFormatException) {
+                } catch (_: NumberFormatException) {
                     // Invalid quantity, don't auto-submit
                 }
                 
@@ -126,7 +124,7 @@ class StockFragment : Fragment() {
                 getString(R.string.quantity_increased, currentQty + 1),
                 Toast.LENGTH_SHORT
             ).show()
-        } catch (e: NumberFormatException) {
+        } catch (_: NumberFormatException) {
             binding.quantityInput.setText(getString(R.string._1))
         }
     }
@@ -319,7 +317,7 @@ class StockFragment : Fragment() {
         // Improve visibility when focused
         binding.productCodeInput.setOnFocusChangeListener { _, hasFocus ->
             if (hasFocus) {
-                binding.productCodeInput.setBackgroundColor(android.graphics.Color.parseColor("#E8F5E9")) // Light green
+                binding.productCodeInput.setBackgroundColor("#E8F5E9".toColorInt()) // Light green
                 currentScanTarget = ScanTarget.PRODUCT_CODE
                 Log.d(tAG, "Product code field has focus")
             } else {
@@ -459,11 +457,7 @@ class StockFragment : Fragment() {
         super.onDestroyView()
         _binding = null
     }
-    
-    private fun launchBarcodeScanner() {
-        val intent = Intent(requireContext(), CustomBarcodeScannerActivity::class.java)
-        scanBarcodeLauncher.launch(intent)
-    }
+
 
     // Handle In Stock radio button selection
     private fun handleInStockSelected() {

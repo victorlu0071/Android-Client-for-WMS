@@ -2,7 +2,6 @@ package com.example.myapplication.api
 
 import com.example.myapplication.data.*
 import okhttp3.MultipartBody
-import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -44,10 +43,16 @@ interface StockSyncApi {
     suspend fun addBarcode(@Body request: BarcodeRequest): Response<BarcodeResponse>
     
     /**
-     * Upload product images using base64 encoded strings in a JSON payload
+     * Upload product images using multipart/form-data
+     * Expects:
+     * - code or barcode field
+     * - image1, image2, etc. fields containing image files
      */
+    @Multipart
     @POST("api/upload-multiple-images")
     suspend fun uploadProductImages(
-        @Body request: Map<String, String>
-    ): Response<ApiResponse>
+        @Part code: MultipartBody.Part? = null,
+        @Part barcode: MultipartBody.Part? = null,
+        @Part images: List<MultipartBody.Part>
+    ): Response<ImageUploadResponse>
 } 

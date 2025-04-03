@@ -3,6 +3,7 @@ package com.example.myapplication.util
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
+import androidx.core.content.edit
 
 /**
  * Utility class to manage application preferences
@@ -40,17 +41,17 @@ class PreferencesManager(context: Context) {
      * Save a new server address
      */
     fun saveServerAddress(address: String) {
-        preferences.edit().putString(KEY_SERVER_ADDRESS, address).apply()
+        preferences.edit { putString(KEY_SERVER_ADDRESS, address) }
     }
     
     /**
      * Save a keycode binding for the scan button
      */
     fun saveScanButtonKeyCode(keyCode: Int, buttonName: String) {
-        preferences.edit()
-            .putInt(KEY_SCAN_BUTTON_KEYCODE, keyCode)
-            .putString(KEY_SCAN_BUTTON_NAME, buttonName)
-            .apply()
+        preferences.edit {
+            putInt(KEY_SCAN_BUTTON_KEYCODE, keyCode)
+                .putString(KEY_SCAN_BUTTON_NAME, buttonName)
+        }
     }
     
     /**
@@ -72,17 +73,17 @@ class PreferencesManager(context: Context) {
      * Clear any existing scan button binding
      */
     fun clearScanButtonBinding() {
-        preferences.edit()
-            .remove(KEY_SCAN_BUTTON_KEYCODE)
-            .remove(KEY_SCAN_BUTTON_NAME)
-            .apply()
+        preferences.edit {
+            remove(KEY_SCAN_BUTTON_KEYCODE)
+                .remove(KEY_SCAN_BUTTON_NAME)
+        }
     }
     
     /**
      * Save the APPCODE for the barcode API
      */
     fun saveBarcodeAppCode(appCode: String) {
-        preferences.edit().putString(KEY_BARCODE_APPCODE, appCode).apply()
+        preferences.edit { putString(KEY_BARCODE_APPCODE, appCode) }
     }
     
     /**
@@ -96,7 +97,7 @@ class PreferencesManager(context: Context) {
      * Save the API lookup preference
      */
     fun saveUseApiLookup(useApiLookup: Boolean) {
-        preferences.edit().putBoolean(KEY_USE_API_LOOKUP, useApiLookup).apply()
+        preferences.edit { putBoolean(KEY_USE_API_LOOKUP, useApiLookup) }
     }
     
     /**

@@ -22,7 +22,6 @@ import com.example.myapplication.ui.stock.StockFragment
 import com.example.myapplication.util.PreferencesManager
 import com.example.myapplication.util.SoundUtil
 import com.google.android.material.navigation.NavigationView
-import com.google.android.material.snackbar.Snackbar
 
 class MainActivity : AppCompatActivity() {
 

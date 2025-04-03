@@ -3,6 +3,7 @@ package com.example.myapplication.data
 import com.google.gson.annotations.SerializedName
 
 data class Product(
+    // For new products, code can be null (server-generated)
     val code: String? = null,
     val name: String,
     @SerializedName("specs") val description: String,
@@ -10,6 +11,7 @@ data class Product(
     @SerializedName("location_code") val location: String? = null,
     val cost: Float? = null,
     val link: String? = null,
+    // For new products, barcode can be provided as identifier
     @SerializedName("barcode") val barcode: String? = null
 )
 
@@ -77,9 +79,28 @@ data class BarcodeResponse(
 )
 
 /**
+ * Response for image upload operations
+ */
+data class ImageUploadResponse(
+    val success: Boolean,
+    val message: String,
+    @SerializedName("uploaded_images") val uploadedImages: List<UploadedImage>
+)
+
+/**
+ * Represents a single uploaded image in the response
+ */
+data class UploadedImage(
+    val index: Int,
+    val path: String
+)
+
+/**
  * Data class for sending product images as base64 encoded strings
  * The request accepts any number of images with keys in the format "image1", "image2", etc.
+ * @deprecated Use multipart form data instead
  */
+@Deprecated("Use multipart form data instead with the new uploadProductImages API")
 data class ProductImagesUploadRequest(
     val code: String,
     val images: Map<String, String> // Map of "image1", "image2", etc. to base64 strings

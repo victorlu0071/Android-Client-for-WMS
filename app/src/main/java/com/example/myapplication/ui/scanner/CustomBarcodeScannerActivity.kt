@@ -12,6 +12,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
@@ -32,15 +33,16 @@ import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
+@androidx.annotation.OptIn(ExperimentalGetImage::class)
 class CustomBarcodeScannerActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "CustomBarcodeScanner"
         private const val REQUEST_CODE_PERMISSIONS = 10
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
+        @Suppress("unused")
         const val BARCODE_RESULT = "barcode_result"
     }
 
@@ -296,24 +298,8 @@ class CustomBarcodeScannerActivity : AppCompatActivity() {
             }
         }
     }
-    
-    @OptIn(androidx.camera.core.ExperimentalGetImage::class)
-    private fun showFocusAnimation() {
-        // Animate scan overlay as visual feedback
-        binding.scanOverlay.animate()
-            .scaleX(0.9f).scaleY(0.9f)
-            .alpha(0.7f)
-            .setDuration(200)
-            .withEndAction {
-                binding.scanOverlay.animate()
-                    .scaleX(1.0f).scaleY(1.0f)
-                    .alpha(1.0f)
-                    .setDuration(200)
-                    .start()
-            }
-            .start()
-    }
-    
+    @androidx.annotation.OptIn(ExperimentalGetImage::class)
+
     private fun showScanResultAnimation() {
         // Show a success indicator animation
         binding.scanSuccessIndicator.visibility = View.VISIBLE
@@ -434,8 +420,8 @@ class CustomBarcodeScannerActivity : AppCompatActivity() {
         super.onDestroy()
         cameraExecutor.shutdown()
     }
-    
-    @OptIn(androidx.camera.core.ExperimentalGetImage::class)
+
+    @androidx.annotation.OptIn(ExperimentalGetImage::class)
     private fun processImageForBarcodes(imageProxy: ImageProxy) {
         val mediaImage = imageProxy.image
         if (mediaImage != null && isScanning.get()) {

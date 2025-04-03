@@ -24,12 +24,14 @@ import com.example.myapplication.databinding.ActivityAddProductBinding
 import com.example.myapplication.ui.scanner.CustomBarcodeScannerActivity
 import com.example.myapplication.ui.camera.MultiCaptureCameraActivity
 import com.example.myapplication.util.BarcodeEvent
-import com.example.myapplication.util.ImageUtil
 import com.example.myapplication.util.PreferencesManager
 import com.example.myapplication.util.SoundUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import org.json.JSONObject
 import retrofit2.HttpException
 import java.io.File
@@ -247,27 +249,31 @@ class AddProductActivity : AppCompatActivity() {
         
         // Format price input for cost field
         binding.editTextCost.addTextChangedListener(object : android.text.TextWatcher {
-            private var isFormatting = false
+            private var current = ""
+            
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: android.text.Editable?) {
-                if (isFormatting) return
-                isFormatting = true
-                
-                val text = s.toString().replace("[^\\d.]".toRegex(), "")
-                try {
-                    val price = text.toDoubleOrNull() ?: 0.0
-                    // Format to 2 decimal places without the currency symbol
-                    val formatted = String.format(Locale.US, "%.2f", price)
-                    if (formatted != s.toString()) {
-                        s?.replace(0, s.length, formatted)
-                    }
-                } catch (_: Exception) {
-                    // Just leave the text as is if there's an error
+            
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                if (s.toString() != current) {
+                    binding.editTextCost.removeTextChangedListener(this)
+                    
+                    // Remove non-digit characters
+                    val cleanString = s.toString().replace("\\D".toRegex(), "")
+                    
+                    // Parse to a double value
+                    val parsed = if (cleanString.isNotEmpty()) cleanString.toDouble() / 100 else 0.0
+                    
+                    // Format as number with 2 decimal places
+                    val formatted = String.format(Locale.US, "%.2f", parsed)
+                    current = formatted
+                    binding.editTextCost.setText(formatted)
+                    binding.editTextCost.setSelection(formatted.length)
+                    
+                    binding.editTextCost.addTextChangedListener(this)
                 }
-                
-                isFormatting = false
             }
+            
+            override fun afterTextChanged(s: android.text.Editable?) {}
         })
         
         // Add auto-lookup on barcode input
@@ -426,7 +432,7 @@ class AddProductActivity : AppCompatActivity() {
         val location = binding.editTextLocation.text.toString().trim()
         val link = binding.editTextLink.text.toString().trim()
 
-        // Validate required fields - product code, barcode and specs are now optional
+        // Validate required fields
         if (name.isEmpty()) {
             Toast.makeText(this, "Please enter a product name", Toast.LENGTH_SHORT).show()
             return
@@ -449,12 +455,10 @@ class AddProductActivity : AppCompatActivity() {
         // Show loading indicator
         binding.progressBar.visibility = View.VISIBLE
 
-        // Use barcode as product code identifier if available
-        // If not provided, the server will generate a unique code
-        val productCode = if (barcode.isNotEmpty()) barcode else null
-        
+        // Create product with barcode as identifier
         val product = Product(
-            code = productCode, // Server will handle empty code generation
+            code = null, // Let server generate code
+            barcode = if (barcode.isNotEmpty()) barcode else null,
             name = name,
             description = specs,
             quantity = stock,
@@ -469,19 +473,25 @@ class AddProductActivity : AppCompatActivity() {
                 val response = NetworkModule.stockSyncApi.addProduct(product)
                 
                 if (response.isSuccessful) {
-                    // Get the product code from the response or use barcode
+                    // Get the product code from the response
                     val responseBody = response.body()
-                    val responseCode = if (responseBody != null && responseBody.data is Map<*, *>) {
-                        responseBody.data.let { data ->
-                            (data as? Map<*, *>)?.get("code")?.toString() ?: barcode
-                        }
+                    
+                    // Extract the server-generated product code
+                    val serverGeneratedCode = if (responseBody != null && responseBody.data is Map<*, *>) {
+                        responseBody.data["code"]?.toString()
+                    } else null
+                    
+                    // Log what we found
+                    if (serverGeneratedCode != null) {
+                        Log.d(TAG, "Server generated product code: $serverGeneratedCode")
                     } else {
-                        barcode // Fallback to barcode if we can't extract the code
+                        Log.w(TAG, "No server-generated product code found in response")
                     }
                     
                     // If we have images, upload them
                     if (imageFiles.isNotEmpty()) {
-                        uploadProductImages(responseCode)
+                        // Use server-generated code as priority, fall back to barcode
+                        uploadProductImages(serverGeneratedCode, barcode)
                     } else {
                         // No images to upload, just finish
                         withContext(Dispatchers.Main) {
@@ -527,53 +537,94 @@ class AddProductActivity : AppCompatActivity() {
         }
     }
     
-    // Upload product images to the API
-    private fun uploadProductImages(productCode: String) {
-        Log.d(TAG, "Starting to upload ${imageFiles.size} images for product code: $productCode")
+    // Upload product images to the API using multipart/form-data
+    private fun uploadProductImages(productCode: String?, productBarcode: String?) {
+        // Make sure we have a valid identifier - prioritize product code
+        if (productCode.isNullOrEmpty() && productBarcode.isNullOrEmpty()) {
+            Toast.makeText(this, "Error: No product identifier available for image upload", Toast.LENGTH_LONG).show()
+            binding.progressBar.visibility = View.GONE
+            return
+        }
+        
+        // Log which identifier we're using
+        val identifier = if (!productCode.isNullOrEmpty()) {
+            "code: $productCode"
+        } else {
+            "barcode: $productBarcode"
+        }
+        Log.d(TAG, "Starting to upload ${imageFiles.size} images for product with $identifier")
         
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                // Convert images to base64
-                val base64Images = mutableListOf<String>()
-                for (file in imageFiles) {
-                    val base64 = ImageUtil.fileToBase64DataUri(file)
-                    if (base64 != null) {
-                        base64Images.add(base64)
-                        Log.d(TAG, "Successfully converted image to base64: ${file.name}, length: ${base64.length}")
-                    } else {
-                        Log.e(TAG, "Failed to convert image to base64: ${file.absolutePath}")
-                    }
+                // Create image parts list for multipart request
+                val imageParts = mutableListOf<MultipartBody.Part>()
+                
+                // Add image parts
+                imageFiles.forEachIndexed { index, file ->
+                    // Create request body from file
+                    val requestFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
+                    
+                    // Add to parts list with name following the format image1, image2, etc.
+                    val part = MultipartBody.Part.createFormData(
+                        "image${index + 1}",
+                        file.name,
+                        requestFile
+                    )
+                    imageParts.add(part)
+                    Log.d(TAG, "Added image${index + 1} to multipart request: ${file.name}, size: ${file.length()}")
                 }
                 
-                if (base64Images.isEmpty()) {
+                if (imageParts.isEmpty()) {
                     withContext(Dispatchers.Main) {
                         binding.progressBar.visibility = View.GONE
-                        Toast.makeText(this@AddProductActivity, "Failed to process images", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@AddProductActivity, "No images to upload", Toast.LENGTH_SHORT).show()
                     }
                     return@launch
                 }
                 
-                // Create request body
-                val requestBody = mapOf(
-                    "code" to productCode,
-                    *base64Images.mapIndexed { index, base64 -> 
-                        "image${index + 1}" to base64 
-                    }.toTypedArray()
-                )
+                // Create code or barcode parts - always prioritize code
+                val codePart = if (!productCode.isNullOrEmpty()) {
+                    Log.d(TAG, "Using product code for image upload: $productCode")
+                    MultipartBody.Part.createFormData("code", productCode)
+                } else null
+                
+                val barcodePart = if (productCode.isNullOrEmpty() && !productBarcode.isNullOrEmpty()) {
+                    Log.d(TAG, "Using product barcode for image upload: $productBarcode")
+                    MultipartBody.Part.createFormData("barcode", productBarcode)
+                } else null
                 
                 // Upload images
-                val response = NetworkModule.stockSyncApi.uploadProductImages(requestBody)
+                val response = NetworkModule.stockSyncApi.uploadProductImages(
+                    code = codePart,
+                    barcode = barcodePart,
+                    images = imageParts
+                )
                 
                 // Handle response on main thread
                 withContext(Dispatchers.Main) {
                     binding.progressBar.visibility = View.GONE
                     if (response.isSuccessful) {
+                        val imageResponse = response.body()
                         // Success
-                        Toast.makeText(this@AddProductActivity, "Product added and images uploaded successfully", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            this@AddProductActivity, 
+                            imageResponse?.message ?: "Product added and images uploaded successfully", 
+                            Toast.LENGTH_SHORT
+                        ).show()
                         finish()
                     } else {
                         // Error
-                        Toast.makeText(this@AddProductActivity, "Failed to upload images: ${response.message()}", Toast.LENGTH_SHORT).show()
+                        val errorMessage = try {
+                            response.errorBody()?.string() ?: "Failed to upload images: ${response.message()}"
+                        } catch (_: Exception) {
+                            "Failed to upload images: ${response.message()}"
+                        }
+                        Log.e(TAG, "Image upload error: $errorMessage")
+                        Toast.makeText(
+                            this@AddProductActivity,
+                            errorMessage,
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
             } catch (e: Exception) {

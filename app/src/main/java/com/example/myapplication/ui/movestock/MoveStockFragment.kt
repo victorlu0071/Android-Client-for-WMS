@@ -431,7 +431,7 @@ class MoveStockFragment : Fragment() {
         // Improve visibility when focused
         binding.productCodeInput.setOnFocusChangeListener { _, hasFocus ->
             if (hasFocus) {
-                binding.productCodeInput.setBackgroundColor(android.graphics.Color.parseColor("#E8F5E9")) // Light green
+                binding.productCodeInput.setBackgroundColor("#E8F5E9".toColorInt()) // Light green
                 currentScanTarget = ScanTarget.PRODUCT_CODE
                 Log.d(TAG, "Product code field has focus")
             } else {
@@ -445,7 +445,7 @@ class MoveStockFragment : Fragment() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: android.text.Editable?) {
                 // Don't auto-search while we're processing a barcode to prevent duplicate searches
-                if (!isProcessingBarcode && s?.length ?: 0 >= 5) {
+                if (!isProcessingBarcode && (s?.length ?: 0) >= 5) {
                     val code = s.toString().trim()
                     if (code.isNotEmpty()) {
                         // Small delay before auto-searching
@@ -473,7 +473,7 @@ class MoveStockFragment : Fragment() {
         // Improve visibility when focused
         binding.locationInput.setOnFocusChangeListener { _, hasFocus ->
             if (hasFocus) {
-                binding.locationInput.setBackgroundColor(android.graphics.Color.parseColor("#E3F2FD")) // Light blue
+                binding.locationInput.setBackgroundColor("#E3F2FD".toColorInt()) // Light blue
                 currentScanTarget = ScanTarget.LOCATION
                 Log.d(TAG, "Location field has focus")
             } else {
